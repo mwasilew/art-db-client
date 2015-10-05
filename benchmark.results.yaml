@@ -1,0 +1,137 @@
+Antutu:
+ - CPU Integer:
+    base: 3200
+    type: int
+ - CPU Float:
+    base: 2400
+    type: int
+ - 2D Score:
+    base: 1600
+    type: int
+ - 3D Score:
+    base: 9000
+    type: int
+ - Mem Score:
+    base: 2800
+    type: int
+ - DB Score:
+    base: 550
+    type: int
+ - SD Read Score:
+    base: 120
+    type: int
+ - SD Write Score:
+    base: 200
+    type: int
+CaffeineMark:
+ - Sieve:
+    base: 72000
+    type: int
+ - Loop:
+    base: 285000
+    type: int
+ - Logic:
+    base: 250000
+    type: int
+ - String:
+    base: 26000
+    type: int
+ - Float:
+    base: 86000
+    type: int
+ - Method:
+    base: 46000
+    type: int
+avg_oatd_time:
+ - ARM_32_Quick:
+    base: 300
+    type: float
+ - ARM_32_Optimizing:
+    base: 700
+    type: float
+ - ARM_64_Quick:
+    base: 650
+    type: float
+ - ARM_64_Optimizing:
+    base: 750
+    type: float
+ - mips_32_Quick:
+    base: 480
+    type: float
+ - mips_64_Optimizing:
+    base: 730
+    type: float
+ - x86_32_Quick:
+    base: 250
+    type: float
+ - x86_32_Optimizing:
+    base: 730
+    type: float
+ - x86_64_Quick:
+    base: 380
+    type: float
+ - x86_64_Optimizing:
+    base: 730
+    type: float
+avg_oat_time:
+ - ARM_32_Quick:
+    base: 11
+    type: float
+ - ARM_32_Optimizing:
+    base: 17
+    type: float
+ - ARM_64_Quick:
+    base: 11
+    type: float
+ - ARM_64_Optimizing:
+    base: 17
+    type: float
+ - mips_32_Quick:
+    base: 10
+    type: float
+ - mips_64_Optimizing:
+    base: 17
+    type: float
+ - x86_32_Quick:
+    base: 11
+    type: float
+ - x86_32_Optimizing:
+    base: 16
+    type: float
+ - x86_64_Quick:
+    base: 11
+    type: float
+ - x86_64_Optimizing:
+    base: 16
+    type: float
+boot_oat_size:
+ - ARM_32_Quick:
+    base: 53698112
+    type: int
+ - ARM_32_Optimizing:
+    base: 65570180
+    type: int
+ - ARM_64_Quick:
+    base: 62344728
+    type: int
+ - ARM_64_Optimizing:
+    base: 75710096
+    type: int
+ - mips_32_Quick:
+    base: 80810476
+    type: int
+ - mips_64_Optimizing:
+    base: 92418816
+    type: int
+ - x86_32_Quick:
+    base: 59490940
+    type: int
+ - x86_32_Optimizing:
+    base: 72273912
+    type: int
+ - x86_64_Quick:
+    base: 61982384
+    type: int
+ - x86_64_Optimizing:
+    base: 75295248
+    type: int
