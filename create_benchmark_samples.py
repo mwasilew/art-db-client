@@ -13,7 +13,7 @@ def main():
                   default="10")
     parser.add_option("--prefix", dest="prefix",
                   help="Prefix for the names of output files",
-                  default="")
+                  default="master")
     parser.add_option("--count", dest="count",
                   help="Number or runs. Default is 1",
                   default=1,
