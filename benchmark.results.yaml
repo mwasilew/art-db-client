@@ -42,7 +42,7 @@ CaffeineMark:
  - Method:
     base: 46000
     type: int
-avg_oatd_time:
+avg-oatd-time:
  - ARM_32_Quick:
     base: 300
     type: float
@@ -73,7 +73,7 @@ avg_oatd_time:
  - x86_64_Optimizing:
     base: 730
     type: float
-avg_oat_time:
+avg-oat-time:
  - ARM_32_Quick:
     base: 11
     type: float
@@ -104,7 +104,7 @@ avg_oat_time:
  - x86_64_Optimizing:
     base: 16
     type: float
-boot_oat_size:
+boot-oat-size:
  - ARM_32_Quick:
     base: 53698112
     type: int
