@@ -1,0 +1,6 @@
+.env/
+.vagrant/
+*.pyc
+.DS_Store
+*~
+*#
