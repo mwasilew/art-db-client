@@ -1,3 +1,4 @@
+import sys
 import click
 import hashlib
 import requests
@@ -9,9 +10,10 @@ URL = "http://10.0.0.100:8000/api"
 
 @click.group()
 @click.option('--url', default=URL, help="default connection url current: '%s'" % URL)
+@click.option('--auth', default="", required=True, help="authentication token")
 @click.pass_context
-def cli(ctx, url):
-    ctx.obj = {'url': url}
+def cli(ctx, url, auth):
+    ctx.obj = {'url': url, 'auth': auth}
 
 
 @click.command()
@@ -21,13 +23,25 @@ def cli(ctx, url):
 def compare(ctx, base_manifest, target_manifest):
 
     api_url = ctx.obj['url']
+    auth = ctx.obj['auth']
     try:
         data = {
             "manifest_1": hashlib.sha1(base_manifest.read()).hexdigest(),
             "manifest_2": hashlib.sha1(base_manifest.read()).hexdigest()
         }
 
-        response = requests.get("%s/compare/manifest/" % api_url, timeout=10, data=data)
+        headers = {"Authorization": "Token %s" % auth}
+
+        response = requests.get(
+            "%s/compare/manifest/" % api_url,
+            headers=headers,
+            timeout=10,
+            data=data
+        )
+
+        if response.status_code == 401:
+            click.echo(click.style("Unauthorized", fg='red'))
+            sys.exit()
 
         data = response.json()
 
