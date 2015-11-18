@@ -1,0 +1,80 @@
+Installation:
+$> virtualenv .venv
+$> source .venv/bin/activate
+$> pip install -r requirements.txt
+
+The tool assumes that passwords are stored in .netrc file in user's HOME
+directory. The format for .netrc is following:
+
+machine full.domain.name login username password art-reports_token
+
+Optionally token can be passed using command line option --auth. This is
+not recommended as the token is saved to history.
+
+Default DB backend URL is set to https://art-reports.linaro.org/api/. Should
+the different backend be used, the URL can be changed with --url command
+line option
+
+Usage: art.py [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --url TEXT   default connection url current: 'https://art-
+               reports.linaro.org/api/'
+  --auth TEXT  authentication token
+  --help       Show this message and exit.
+
+Commands:
+  compare
+  details
+  list
+  manifest
+
+Command details:
+
+list <number>
+Displays the last <number> of manifests recorded in the database together
+with the summary of results available for them. Example:
+Manifest ID    Results
+-------------  ---------
+3
+               base
+               340/4
+
+Results might show:
+ - base: baseline results without any patches applied
+ - XXXX/YY: results with patch from gerrit applied
+
+manifest <id> <filename.xml>
+Saves the manifest with <id> to the local <filename.xml>
+
+details
+Shows detailed results for baseline or patch. Example:
+
+--------  -------------------------------------------------------------------------------------------------------------------------
+manifest  1
+builds    [u'https://android-build.linaro.org/jenkins/view/ART/job/linaro-art-stable-m-preview-build-ARTBootImageMeasurements/40/']
+branch    master
+boards    [u'nexus9-01']
+--------  -------------------------------------------------------------------------------------------------------------------------
+Name                                       Average         Std dev    Iterations
+--------------------------------  ----------------  --------------  ------------
+boot-oat-size_ARM_32_Optimizing        7.01892e+07     1.36276e+06            10
+boot-oat-size_ARM_32_Quick             5.63962e+07     1.94709e+06            10
+
+compare --patchset 1234/2
+Compares the results obtained from build with patch applied to it's baseline.
+It is also possible to use different manifest as baseline. Example:
+
+          patch                base
+--------  ----------------     ----------------
+manifest  1                    1
+boards    [u'nexus9-01']       [u'nexus9-01']
+builds    [...]                [...]
+branch    master               master
+gerrit    2/1                  --
+
+Name                              % diff                                   Base value    #base    #patched
+--------------------------------  ---------------------------------  ----------------  -------  ----------
+boot-oat-size_ARM_32_Optimizing   3.38738304397 +- 2626005.93961          7.01892e+07       10          10
+boot-oat-size_ARM_32_Quick        -0.483276692137 +- 2269347.68723        5.63962e+07       10          10
+
