@@ -1,9 +1,19 @@
-Installation:
+I. Installation:
+There are two alternative ways to install the script
+1. use virtualenv and pip
 $> virtualenv .venv
 $> source .venv/bin/activate
 $> pip install -r requirements.txt
+$> python art.py ...
 
-The tool assumes that passwords are stored in .netrc file in user's HOME
+2. use setup.py
+Note: it is adviced to install the tool in the virtualenv. Run with sudo if not using
+virtualenv
+$> sudo python setup.py
+$> linaro-art ...
+
+
+II. The tool assumes that passwords are stored in .netrc file in user's HOME
 directory. The format for .netrc is following:
 
 machine full.domain.name login username password art-reports_token
@@ -29,9 +39,9 @@ Commands:
   list
   manifest
 
-Command details:
+III. Command details:
 
-list <number>
+1. list <number>
 Displays the last <number> of manifests recorded in the database together
 with the summary of results available for them. Example:
 Manifest ID    Results
@@ -44,10 +54,10 @@ Results might show:
  - base: baseline results without any patches applied
  - XXXX/YY: results with patch from gerrit applied
 
-manifest <id> <filename.xml>
+2. manifest <id> <filename.xml>
 Saves the manifest with <id> to the local <filename.xml>
 
-details
+3. details
 Shows detailed results for baseline or patch. Example:
 
 --------  -------------------------------------------------------------------------------------------------------------------------
@@ -61,7 +71,7 @@ Name                                       Average         Std dev    Iterations
 boot-oat-size_ARM_32_Optimizing        7.01892e+07     1.36276e+06            10
 boot-oat-size_ARM_32_Quick             5.63962e+07     1.94709e+06            10
 
-compare --patchset 1234/2
+4. compare --patchset 1234/2
 Compares the results obtained from build with patch applied to it's baseline.
 It is also possible to use different manifest as baseline. Example:
 
