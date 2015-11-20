@@ -376,33 +376,38 @@ if __name__ == '__main__':
 
     logger.info("build_no: %s\nproj: %s\nbase_url: %s" % (jenkins_build_number, jenkins_project, jenkins_base_url))
 
-    jenkins    = LinaroAndroidBuildSystem(jenkins_base_url, jenkins_project, options.jenkins_user, options.jenkins_token)
-    lava       = LAVA(options.lava_user, options.lava_token)
-    lava.set_result_filename(options.result_file_name)
-    backend_db = ArtDb(options.backend_url, options.backend_token)
     try:
+        jenkins    = LinaroAndroidBuildSystem(jenkins_base_url, jenkins_project, options.jenkins_user, options.jenkins_token)
+        lava       = LAVA(options.lava_user, options.lava_token)
+        lava.set_result_filename(options.result_file_name)
+        backend_db = ArtDb(options.backend_url, options.backend_token)
         gerrit_param = jenkins.get_build_gerrit_parameters(int(jenkins_build_number))
         manifest     = jenkins.get_build_manifest(int(jenkins_build_number))
         branch       = jenkins.get_build_branch(int(jenkins_build_number))
+
+        data = { "build_url" : options.build_url,
+                 "manifest": manifest,
+                 "gerrit_params": gerrit_param,
+                 "branch": branch,
+                 "test_result": {} }
+
+        test_job_ids = jenkins.get_build_test_job_ids(int(jenkins_build_number))
+        logger.info("Test job IDs: %s" % str(test_job_ids))
+        for tid in test_job_ids:
+            logger.info("Querying job #%s test results" % tid)
+            try:
+                data['test_result'] = lava.get_test_results(tid)
+            except Exception as e:
+                logger.error(e, exc_info=True)
+                exit(1)
+
+            try:
+                backend_db.submit_result_to_db(data)
+            except Exception as e:
+                logger.error(e, exc_info=True)
+                exit(1)
+
     except Exception as e:
         logger.error("Can not get required build information!\n%s" % e)
-        exit(-1)
-
-    data = { "build_url" : options.build_url,
-             "manifest": manifest,
-             "gerrit_params": gerrit_param,
-             "branch": branch,
-             "test_result": {} }
-
-    test_job_ids = jenkins.get_build_test_job_ids(int(jenkins_build_number))
-    logger.info("Test job IDs: %s" % str(test_job_ids))
-    for tid in test_job_ids:
-        logger.info("Querying job #%s test results" % tid)
-        try:
-            data['test_result'] = lava.get_test_results(tid)
-        except Exception as e:
-            logger.error(e, exc_info=True)
-
-        backend_db.submit_result_to_db(data)
-
-
+        logger.error(e, exc_info=True)
+        exit(1)
