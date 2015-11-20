@@ -69,7 +69,8 @@ def list(ctx, num_manifests):
     try:
         data = {
             "fields": "id",
-            "limit": num_manifests
+            "limit": num_manifests,
+            "ordering": "-id"
         }
 
         headers = {"Authorization": "Token %s" % auth}
@@ -81,7 +82,7 @@ def list(ctx, num_manifests):
         for manifest in manifests:
             table.append([manifest['id'], ''])
             data = {
-                "manifest": manifest,
+                "manifest": manifest['id'],
                 "fields": "branch,gerrit_change_id,gerrit_change_number,gerrit_patchset_number"
             }
             url = urljoin(api_url, "result/")
@@ -128,9 +129,10 @@ def manifest(ctx, manifest_id, manifest_file_name):
 
 
 @click.command()
-@click.argument('patchset', required=False, nargs=1)
+@click.option('--patchset', required=False, nargs=1)
+@click.option('--manifest', required=False, nargs=1)
 @click.pass_context
-def details(ctx, patchset):
+def details(ctx, patchset, manifest):
     api_url = ctx.obj['url']
     auth = ctx.obj['auth']
     try:
@@ -140,6 +142,11 @@ def details(ctx, patchset):
             data = {
                 "gerrit_change_number": gerrit_change_number,
                 "gerrit_patchset_number": gerrit_patchset_number
+            }
+
+        if manifest:
+            data = {
+                "manifest_id": manifest
             }
 
         headers = {"Authorization": "Token %s" % auth}
