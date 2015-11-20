@@ -11,15 +11,29 @@ import requests
 import shutil
 import subprocess
 import sys
-import xmlrpclib
 import zipfile
-import ConfigParser
 
+try:
+    import ConfigParser
+except:
+    # python3
+    from configparser import ConfigParser
+
+try:
+    from xmlrpclib import ServerProxy
+except:
+    # python3
+    from xmlrpc.client import ServerProxy
 from optparse import OptionParser
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except:
+    from io import StringIO
+
 import xml.etree.ElementTree as ET
 from jenkinsapi.jenkins import Jenkins
 from urlparse import urljoin, urlsplit
+from collections import OrderedDict
 
 logging.basicConfig(format='%(levelname)s:  %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,9 +67,9 @@ class ArtDb(object):
         if response.status_code == 200:
             return response.json()
         else:
-            print response.status_code
-            print response.reason
-            print response.text
+            logger.warn(response.status_code)
+            logger.warn(response.reason)
+            logger.warn(response.text)
         return []
 
     def push_object(self, endpoint, params):
@@ -73,8 +87,9 @@ class ArtDb(object):
         if response.status_code < 300:
             return response.json()
         else:
-            print response.status_code
-            print response.text
+            logger.warn(response.status_code)
+            logger.warn(response.reason)
+            logger.warn(response.text)
         return []
 
     def submit_result_to_db(self, data):
@@ -224,7 +239,7 @@ class LAVA(object):
             self.username    = username
             self.token       = token
             server_url       = "https://%s:%s@%sRPC2/" % (self.username, self.token, self.lava_server.split("//")[1])
-            self.server      = xmlrpclib.ServerProxy(server_url)
+            self.server      = ServerProxy(server_url)
             self.result_file_name = ""
         except:
             logger.warning("Can not connect to LAVA server: %s" % lava_server)
@@ -277,12 +292,12 @@ class LAVA(object):
                 # The test name and test results are in the attachmented pkl file
                 # get test results for the attachment
                 test_mode        = ast.literal_eval(src['test_params'])['MODE']
-                pkl_content      = (a['content'] for a in host['attachments'] if a['pathname'].endswith('pkl')).next()
-                pkl_text         = base64.b64decode(pkl_content)
+                json_content      = (a['content'] for a in host['attachments'] if a['pathname'].endswith('json')).next()
+                json_text         = base64.b64decode(json_content)
                 # save pickle file locally
-                with open(self.result_file_name + "_" + str(test_mode) + ".pkl", "w") as pkl_file:
-                    pkl_file.write(pkl_text)
-                test_result_dict = pickle.loads(pkl_text)
+                with open(self.result_file_name + "_" + str(test_mode) + ".json", "w") as json_file:
+                    json_file.write(json_text)
+                test_result_dict = json.loads(json_text)
                 # Key Format: benchmarks/micro/<BENCHMARK_NAME>.<SUBSCORE>
                 # Extract and unique them to form a benchmark name list
                 test_result_keys = list(bn.split('/')[-1].split('.')[0] for bn in test_result_dict.keys())
