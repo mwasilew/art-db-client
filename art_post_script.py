@@ -256,11 +256,24 @@ class LAVA(object):
                         "subscore": [] }
         try:
             job_status = self.server.scheduler.job_status(job_no)
+            target_job_status = None
+            if job_no.endswith(".0"):
+                target_job_id = job_no.split(".")[0] + ".1"
+                target_job_status = self.server.scheduler.job_status(target_job_id)
+                if target_job_status['job_status'] == 'Incomplete' or \
+                    target_job_status['job_status'] == 'Cancelled':
+                    # exit with code 0 for jobs that most likely didin't produce any results
+                    logger.info("Job #%s status is %s. Exiting" % (target_job_id, target_job_status['job_status']))
+                    exit(0)
         except:
             logger.warning("Can not get any information for test job: %s" % job_no)
             raise
 
-        if job_status['job_status'] != 'Complete':
+        if job_status['job_status'] == 'Incomplete' or job_status['job_status'] == 'Cancelled':
+            # exit with code 0 for jobs that most likely didin't produce any results
+            logger.info("Job #%s status is %s. Exiting" % (job_no, job_status['job_status']))
+            exit(0)
+        elif job_status['job_status'] != 'Complete':
             logger.warning("!!Job #%s is not completed.\n\tJob status: %s!! " % (job_no, job_status['job_status']))
         else:
             try:
