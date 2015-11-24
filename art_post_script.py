@@ -248,6 +248,21 @@ class LAVA(object):
     def set_result_filename(self, result_file_name):
         self.result_file_name = result_file_name
 
+
+    def test_jobs_completed(self, job_list):
+        for job_id in job_list:
+            host_job_status = self.server.scheduler.job_status(job_id)
+            if host_job_status['job_status'] not in ['Complete', 'Incomplete', 'Cancelled']:
+                logger.info("LAVA job %s status: %s" % (job_id, host_job_status['job_status']))
+                return False
+            if job_id.endswith(".0"):
+                target_job_id = job_id.split(".")[0] + ".1"
+                target_job_status = self.server.scheduler.job_status(target_job_id)
+                if target_job_status['job_status'] not in ['Complete', 'Incomplete', 'Cancelled']:
+                    logger.info("LAVA job %s status: %s" % (job_id, target_job_status['job_status']))
+                    return False
+        return True
+
     def get_test_results(self, job_no):
         test_result_list = []
         test_result = { "board": "",
@@ -273,6 +288,10 @@ class LAVA(object):
             # exit with code 0 for jobs that most likely didin't produce any results
             logger.info("Job #%s status is %s. Exiting" % (job_no, job_status['job_status']))
             exit(0)
+        if job_status['bundle_sha1'] == '':
+            # no result bundle
+            logger.info("No result bundle for job #%s" % job_no)
+            return test_result_list
         elif job_status['job_status'] != 'Complete':
             logger.warning("!!Job #%s is not completed.\n\tJob status: %s!! " % (job_no, job_status['job_status']))
         else:
@@ -406,6 +425,9 @@ if __name__ == '__main__':
 
         test_job_ids = jenkins.get_build_test_job_ids(int(jenkins_build_number))
         logger.info("Test job IDs: %s" % str(test_job_ids))
+        if not lava.test_jobs_completed(test_job_ids):
+            # wait until all test jobs for the build complete
+            exit(1)
         for tid in test_job_ids:
             logger.info("Querying job #%s test results" % tid)
             try:
