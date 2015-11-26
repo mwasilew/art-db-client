@@ -252,13 +252,13 @@ class LAVA(object):
     def test_jobs_completed(self, job_list):
         for job_id in job_list:
             host_job_status = self.server.scheduler.job_status(job_id)
-            if host_job_status['job_status'] not in ['Complete', 'Incomplete', 'Cancelled']:
+            if host_job_status['job_status'] not in ['Complete', 'Incomplete', 'Canceled']:
                 logger.info("LAVA job %s status: %s" % (job_id, host_job_status['job_status']))
                 return False
             if job_id.endswith(".0"):
                 target_job_id = job_id.split(".")[0] + ".1"
                 target_job_status = self.server.scheduler.job_status(target_job_id)
-                if target_job_status['job_status'] not in ['Complete', 'Incomplete', 'Cancelled']:
+                if target_job_status['job_status'] not in ['Complete', 'Incomplete', 'Canceled']:
                     logger.info("LAVA job %s status: %s" % (job_id, target_job_status['job_status']))
                     return False
         return True
@@ -276,7 +276,7 @@ class LAVA(object):
                 target_job_id = job_no.split(".")[0] + ".1"
                 target_job_status = self.server.scheduler.job_status(target_job_id)
                 if target_job_status['job_status'] == 'Incomplete' or \
-                    target_job_status['job_status'] == 'Cancelled':
+                    target_job_status['job_status'] == 'Canceled':
                     # exit with code 0 for jobs that most likely didin't produce any results
                     logger.info("Job #%s status is %s. Exiting" % (target_job_id, target_job_status['job_status']))
                     exit(0)
@@ -284,7 +284,7 @@ class LAVA(object):
             logger.warning("Can not get any information for test job: %s" % job_no)
             raise
 
-        if job_status['job_status'] == 'Incomplete' or job_status['job_status'] == 'Cancelled':
+        if job_status['job_status'] in ['Incomplete', 'Canceled']:
             # exit with code 0 for jobs that most likely didin't produce any results
             logger.info("Job #%s status is %s. Exiting" % (job_no, job_status['job_status']))
             exit(0)
@@ -303,8 +303,10 @@ class LAVA(object):
                           t['test_id'] == 'lava-android-benchmark-host').next()
                 src = (s for s in host['software_context']['sources'] if 'test_params' in s).next()
             except:
-                logger.warning("Job #%s seems not be a complete job, can not get test result" % job_no)
-                raise
+                # if there are no results, remove job from the pool
+                logger.warning("Job #%s didn't produce any useful results" % job_no)
+                exit(0)
+                #raise
             # Get target device name
             test_result['board']        = target['attributes']['target']
             test_result['board_config'] = target['attributes']['target']
