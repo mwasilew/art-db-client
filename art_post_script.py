@@ -121,7 +121,7 @@ class ArtDb(object):
             }
             for key, value in data['gerrit_params'].items():
                 if value:
-                    params.update({key.lower: value})
+                    params.update({key.lower(): value})
                 if key == "LOCAL_MANIFEST_BRANCH":
                     params.update({"branch": value})
             result = self.push_object(RESULT_ENDPOINT, params)
