@@ -3,15 +3,12 @@ import requests
 import argparse
 
 
-
-
 def colon_separted_type(item):
     value = item.split(":")
     if len(value) != 2 or not value[0] or not value[1]:
         raise argparse.ArgumentTypeError(
             "should be in form ITEM_NAME:ITEM_VALUE")
     return value
-
 
 
 def main():
