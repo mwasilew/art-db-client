@@ -17,8 +17,20 @@ def pretty_errors(errors):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Upload data to ART instance')
+    description = """
+    the script is responsible for pushing the data from jenkins instance to ART server.
+    It should be called with instance URL and TOKEN along with and VALUES list.
+
+    The VALUES is a list passed in space separated pair NAME:VALUE [NAME:VALUE].
+    The minimum required list is one with the id.
+
+    Examples:\n
+
+    - jenkins.py http://art-instance.org a05d8394aa22806 id:12341234
+    - jenkins.py http://art-instance.org a05d8394aa22806 id:12341234 url:http://jenkins-server/job/1234
+    """
+
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument('url', help='Instance url')
     parser.add_argument('token', help='Authentication token')
