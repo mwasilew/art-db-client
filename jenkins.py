@@ -5,6 +5,10 @@ import argparse
 
 def colon_separted_type(item):
     value = item.split(":")
+
+    if len(value) > 2:
+        value = value[0], ":".join(value[1:])
+
     if len(value) != 2 or not value[0] or not value[1]:
         raise argparse.ArgumentTypeError(
             "should be in form ITEM_NAME:ITEM_VALUE")
@@ -64,3 +68,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

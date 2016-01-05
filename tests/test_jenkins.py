@@ -30,6 +30,12 @@ def test_colon_separted_type_5():
     assert len(jenkins.colon_separted_type("item_name:item_value")) == 2
 
 
+def test_colon_separted_type_6():
+    assert len(jenkins.colon_separted_type("url:http://google.com")) == 2
+    assert ('url', 'http://google.com') == \
+        jenkins.colon_separted_type("url:http://google.com")
+
+
 def test_pretty_errors_1():
     errors = {"id": ["one error"]}
     assert '"id" - one error' == jenkins.pretty_errors(errors)
@@ -46,4 +52,5 @@ def test_pretty_errors_3():
 
     assert '"id" - one error' in jenkins.pretty_errors(errors)
     assert '"url" - one error' in jenkins.pretty_errors(errors)
+
 
