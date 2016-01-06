@@ -16,7 +16,10 @@ setup(
         'tabulate==0.7.5'
     ],
     entry_points={
-        'console_scripts': ['linaro-art = art:main']
+        'console_scripts': [
+            'linaro-art = art:main',
+            'linaro-art-jenkins = jenkins:main'
+        ]
     },
     classifiers=[
         'License :: OSI Approved :: BSD License',
@@ -26,3 +29,4 @@ setup(
     ],
     zip_safe=False,
 )
+
