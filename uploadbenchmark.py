@@ -4,8 +4,9 @@ import json
 import requests
 import sys
 
+from netrc import netrc
 from optparse import OptionParser
-from urlparse import urljoin, urlsplit
+from urlparse import urljoin, urlsplit, urlparse
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -18,10 +19,11 @@ BOARD_ENDPOINT = "board/"
 BOARDCONFIGURATION_ENDPOINT = "boardconfiguration/"
 BENCHMARK_ENDPOINT = "benchmark/"
 
-def retrieve_object_list(backend, endpoint, params):
+def retrieve_object_list(backend, endpoint, params, headers):
     url = urljoin(backend, endpoint)
-    #response = requests.get(url, params=params, headers=headers)
-    response = requests.get(url, params=params)
+    response = requests.get(url, params=params, headers=headers)
+    print response.request.headers
+    #response = requests.get(url, params=params)
     if response.status_code == 200:
         return response.json()
     else:
@@ -30,11 +32,20 @@ def retrieve_object_list(backend, endpoint, params):
         print response.text
     return []
 
-def push_object(backend, endpoint, params):
+def push_object(backend, endpoint, params, headers):
     url = urljoin(backend, endpoint)
+    s = requests.Session()
+    r = requests.Request('POST',
+            url,
+            data=params,
+            headers=headers)
+    prep = r.prepare()
+    print r.headers
     #headers.update({'Content-Type':'application/json'})
     #response = requests.post(url, data=params, headers=headers)
-    response = requests.post(url, data=params)
+    response = s.send(prep)
+    print response.request.headers
+    #response = requests.post(url, data=params)
     #pprint.pprint(params)
     if response.status_code < 300:
         return response.json()
@@ -69,6 +80,8 @@ def main():
                   help="Gerrit change URL")
     parser.add_option("--build-url", dest="build_url",
                   help="Jenkins build URL")
+    parser.add_option("--token", dest="token",
+                  help="API authorisation token")
 
     (options, args) = parser.parse_args()
     if not options.backend_url:
@@ -88,6 +101,21 @@ def main():
     if not options.build_url:
         parser.error("Build URL is mandatory")
 
+    token = None
+    if options.token:
+        print "Using token from command line"
+        token = options.token
+    else:
+        print "Using token from .netrc"
+        urlparser = urlparse(options.backend_url)
+        netrcauth = netrc()
+        try:
+            login, account, token = netrcauth.authenticators(urlparser[1]) # netloc
+        except:
+            print "No account information found"
+            sys.exit(1)
+    headers = {"Authorization": "Token %s" % token}
+
     # check if manifest already existis
     manifest = None
     with open(options.manifest) as manifest_file:
@@ -95,7 +123,7 @@ def main():
         params = {
             "manifest": manifest_contents
         }
-        manifest = push_object(options.backend_url, MANIFEST_ENDPOINT, params)
+        manifest = push_object(options.backend_url, MANIFEST_ENDPOINT, params, headers)
 
     if not manifest:
         # ToDo move to logging
@@ -105,7 +133,7 @@ def main():
     params = {
         "name": options.benchmark
     }
-    benchmark = push_object(options.backend_url, BENCHMARK_ENDPOINT, params)
+    benchmark = push_object(options.backend_url, BENCHMARK_ENDPOINT, params, headers)
     if not benchmark:
         # ToDo move to logging
         print "Something went wrong. Got no benchmark in database!"
@@ -114,19 +142,19 @@ def main():
     params = {
         "name": options.boardconfig
     }
-    boardconfig = push_object(options.backend_url, BOARDCONFIGURATION_ENDPOINT, params)
+    boardconfig = push_object(options.backend_url, BOARDCONFIGURATION_ENDPOINT, params, headers)
 
     params = {
         "displayname": options.board,
         "display": options.board,
         "configuration": boardconfig['id']
     }
-    board = push_object(options.backend_url, BOARD_ENDPOINT, params)
+    board = push_object(options.backend_url, BOARD_ENDPOINT, params, headers)
 
     params = {
         "name": options.branch
     }
-    branch = push_object(options.backend_url, BRANCH_ENDPOINT, params)
+    branch = push_object(options.backend_url, BRANCH_ENDPOINT, params, headers)
 
 
     params = {
@@ -143,7 +171,7 @@ def main():
         params.update({"gerrit_change_number": options.change_number})
     if options.change_url:
         params.update({"gerrit_change_url": options.change_url})
-    result = push_object(options.backend_url, RESULT_ENDPOINT, params)
+    result = push_object(options.backend_url, RESULT_ENDPOINT, params, headers)
 
     params = {
         "benchmark": benchmark['id'],
@@ -160,7 +188,7 @@ def main():
                 "measurement": row[1]
                 }
             )
-            push_object(options.backend_url, RESULTDATA_ENDPOINT, params)
+            push_object(options.backend_url, RESULTDATA_ENDPOINT, params, headers)
 
 
 if __name__ == "__main__":
