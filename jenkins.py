@@ -84,6 +84,8 @@ if __name__ == '__main__':
     jenkins_build_id = os.environ.get("BUILD_ID")
     jenkins_build_url = os.environ.get("BUILD_URL")
 
+    branch_name = os.environ.get("LOCAL_MANIFEST_BRANCH")
+
     art_url = os.environ.get("ART_URL", "http://localhost:8000/")
     art_token = os.environ.get("ART_TOKEN")
 
@@ -116,6 +118,7 @@ if __name__ == '__main__':
 
         'test_jobs': test_jobs,
         'manifest': manifest,
+        'branch_name': branch_name,
 
         "gerrit_change_number": os.environ.get("GERRIT_CHANGE_NUMBER"),
         "gerrit_patchset_number":os.environ.get("GERRIT_PATCHSET_NUMBER"),
