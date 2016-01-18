@@ -117,10 +117,10 @@ if __name__ == '__main__':
         'test_jobs': test_jobs,
         'manifest': manifest,
 
-        "gerrit_change_id": os.environ.get("GERRIT_CHANGE_ID"),
-        "gerrit_change_url": os.environ.get("GERRIT_CHANGE_URL"),
+        "gerrit_change_number": os.environ.get("GERRIT_CHANGE_NUMBER"),
         "gerrit_patchset_number":os.environ.get("GERRIT_PATCHSET_NUMBER"),
-        "gerrit_change_number": os.environ.get("GERRIT_CHANGE_NUMBER")
+        "gerrit_change_url": os.environ.get("GERRIT_CHANGE_URL"),
+        "gerrit_change_id": os.environ.get("GERRIT_CHANGE_ID", "")
     }
 
     print params
