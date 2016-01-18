@@ -1,24 +1,22 @@
 #!/usr/bin/python
-
-import httplib
-import json
-import logging
 import os
 import sys
+import json
+import httplib
+import logging
+
 from urlparse import urljoin, urlsplit
+
 
 logging.basicConfig(format='%(levelname)s:  %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 httplib.HTTPConnection.debuglevel = 1
 
-MANIFEST_ENDPOINT           = "/api/manifest/"
-RESULT_ENDPOINT             = "/api/result/"
-RESULTDATA_ENDPOINT         = "/api/resultdata/"
-BENCHMARK_ENDPOINT          = "/api/benchmark/"
+
+RESULT_ENDPOINT = "/api/result/"
 
 
-def push_object(auth_pw, backend_url, endpoint, params):
+def _push_object(auth_pw, backend_url, endpoint, params):
     usplit = urlsplit(backend_url)
     url = urljoin(backend_url, endpoint)
 
@@ -51,12 +49,40 @@ def push_object(auth_pw, backend_url, endpoint, params):
         logger.warn(response.read())
     return []
 
+
+def _get_manifest(workspace_path):
+    manifest_path = workspace_path + "pinned-manifest.xml"
+    if os.path.exists(manifest_path):
+        with open(manifest_path, "r") as manifest_file:
+            manifest = manifest_file.read()
+
+    return manifest
+
+
+def _get_test_jobs(workspace_path):
+    test_jobs = ""
+    for root, dirs, files in os.walk(workspace_path):
+        for f in files:
+            if f.startswith("lava-job-info-"):
+                print "Opening %s/%s" % (root, f)
+                with open("%s/%s" % (root, f), 'r') as info_file:
+                    lava_info = json.load(info_file)
+                    test_job_ids = ",".join(lava_info['job_id'])
+                    print "LAVA job IDs to add: %s" % test_job_ids
+                    if len(test_jobs) == 0:
+                        test_jobs = test_job_ids
+                    else:
+                        test_jobs = test_jobs + "," + test_job_ids
+
+    return test_jobs
+
+
 if __name__ == '__main__':
+    jenkins_project_name = os.environ.get("JOB_NAME")
+
     jenkins_build_number = os.environ.get("BUILD_NUMBER")
     jenkins_build_id = os.environ.get("BUILD_ID")
     jenkins_build_url = os.environ.get("BUILD_URL")
-
-    jenkins_project_name = os.environ.get("JOB_NAME")
 
     art_url = os.environ.get("ART_URL", "http://localhost:8000/")
     art_token = os.environ.get("ART_TOKEN")
@@ -74,43 +100,13 @@ if __name__ == '__main__':
         print "ART token not set. Exiting!"
         sys.exit(1)
 
-    gerrit_params = {
-        "gerrit_change_id": os.environ.get("GERRIT_CHANGE_ID"),
-        "gerrit_change_url": os.environ.get("GERRIT_CHANGE_URL"),
-        "gerrit_patchset_number":os.environ.get("GERRIT_PATCHSET_NUMBER"),
-        "gerrit_change_number": os.environ.get("GERRIT_CHANGE_NUMBER")
-    }
-
     workspace_path = "/home/buildslave/srv/%s/android/out/" % jenkins_project_name
 
-    # extract manifest
-    manifest = None
-    manifest_path = workspace_path + "pinned-manifest.xml"
-    if os.path.exists(manifest_path):
-        with open(manifest_path, "r") as manifest_file:
-            manifest = manifest_file.read()
-    if manifest is None:
-        print "No manifest found. Exiting!"
-        sys.exit(1)
-    # extract test jobs
-    # lava-job-info files are stored in
-    # /home/buildslave/srv/$JOB_NAME/android/
-    test_jobs = ""
-    for root, dirs, files in os.walk(workspace_path):
-        for f in files:
-            if f.startswith("lava-job-info-"):
-                # {"lava_url": "https://validation.linaro.org", "job_id": ["676441.0", "676441.1"]}
-                print "Opening %s/%s" % (root, f)
-                with open("%s/%s" % (root, f), 'r') as info_file:
-                    lava_info = json.load(info_file)
-                    test_job_ids = ",".join(lava_info['job_id'])
-                    print "LAVA job IDs to add: %s" % test_job_ids
-                    if len(test_jobs) == 0:
-                        test_jobs = test_job_ids
-                    else:
-                        test_jobs = test_jobs + "," + test_job_ids
+    manifest = _get_manifest(workspace_path)
+    test_jobs = _get_test_jobs(workspace_path)
 
     print "Registered test jobs: %s" % test_jobs
+
     params = {
         'name': jenkins_project_name,
 
@@ -119,10 +115,14 @@ if __name__ == '__main__':
         'build_number': jenkins_build_number,
 
         'test_jobs': test_jobs,
-        'manifest': manifest
+        'manifest': manifest,
+
+        "gerrit_change_id": os.environ.get("GERRIT_CHANGE_ID"),
+        "gerrit_change_url": os.environ.get("GERRIT_CHANGE_URL"),
+        "gerrit_patchset_number":os.environ.get("GERRIT_PATCHSET_NUMBER"),
+        "gerrit_change_number": os.environ.get("GERRIT_CHANGE_NUMBER")
     }
-    for gerrit_key, gerrit_value in gerrit_params.iteritems():
-        if gerrit_value is not None:
-            params.update({gerrit_key.lower(): gerrit_value})
+
     print params
-    push_object(art_token, art_url, RESULT_ENDPOINT, params)
+
+    _push_object(art_token, art_url, RESULT_ENDPOINT, params)
