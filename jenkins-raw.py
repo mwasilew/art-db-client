@@ -53,7 +53,7 @@ def push_object(auth_pw, backend_url, endpoint, params):
 
 if __name__ == '__main__':
     jenkins_build_number = os.environ.get("BUILD_NUMBER")
-    jenkins_build_id = os.environ.get("BUILD_NUMBER")
+    jenkins_build_id = os.environ.get("BUILD_ID")
     jenkins_build_url = os.environ.get("BUILD_URL")
 
     jenkins_project_name = os.environ.get("JOB_NAME")
