@@ -1,71 +1,128 @@
+#!/usr/bin/python
+import os
 import sys
-import requests
-import argparse
+import json
+import httplib
+import logging
+
+from urlparse import urljoin, urlsplit
 
 
-def colon_separted_type(item):
-    value = item.split(":")
-
-    if len(value) > 2:
-        value = value[0], ":".join(value[1:])
-
-    if len(value) != 2 or not value[0] or not value[1]:
-        raise argparse.ArgumentTypeError(
-            "should be in form ITEM_NAME:ITEM_VALUE")
-    return value
-
-def pretty_errors(errors):
-    return ", ".join(
-        ['"%s" - %s' % (error, ", ".join(messages).lower())
-         for error, messages in errors.items()])
+logging.basicConfig(format='%(levelname)s:  %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
+httplib.HTTPConnection.debuglevel = 1
 
 
-def main():
-    description = """
-    the script is responsible for pushing the data from jenkins instance to ART server.
-    It should be called with instance URL and TOKEN along with and VALUES list.
+RESULT_ENDPOINT = "/api/result/"
 
-    The VALUES is a list passed in space separated pair NAME:VALUE [NAME:VALUE].
-    The minimum required list is one with the id.
 
-    Examples:\n
+def _push_object(auth_pw, backend_url, endpoint, params):
+    usplit = urlsplit(backend_url)
+    url = urljoin(backend_url, endpoint)
 
-    - jenkins.py http://art-instance.org a05d8394aa22806 id:12341234
-    - jenkins.py http://art-instance.org a05d8394aa22806 id:12341234 url:http://jenkins-server/job/1234
-    """
+    logger.info("Submitting to URL: %s" % url)
 
-    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
+    headers = {
+        "Content-type": "application/json",
+        "Accept": "application/json",
+        "Authorization": "Token %s" % auth_pw
+    }
 
-    parser.add_argument('url', help='Instance url')
-    parser.add_argument('token', help='Authentication token')
-    parser.add_argument('values', nargs='+',
-                        metavar='item_name:item_value',
-                        type=colon_separted_type,
-                        help='List of values to send to ART instance')
+    conn = None
+    if usplit.scheme.lower() == "http":
+        conn = httplib.HTTPConnection(usplit.netloc)
+    if usplit.scheme.lower() == "https":
+        conn = httplib.HTTPSConnection(usplit.netloc)
 
-    args = parser.parse_args()
-    try:
-        headers = {"Authorization": "Token %s" % args.token}
-        data = dict(args.values)
-
-        response = requests.post(args.url, headers=headers, data=data)
-
-        if response.status_code == requests.codes.ok:
-            sys.stdout.write("OK\n")
-            sys.exit()
-
-        if response.status_code == requests.codes.bad:
-            errors = pretty_errors(response.json())
-            sys.stderr.write("Validation Errors: %s\n" % errors)
-            sys.exit(1)
-
-        response.raise_for_status()
-
-    except requests.exceptions.RequestException as e:
-        sys.stderr.write("Error: %s\n" % str(e))
+    if conn is None:
+        print "Unknown scheme: %s" % usplit.scheme
         sys.exit(1)
+
+    conn.request("POST", endpoint, json.dumps(params), headers)
+
+    response = conn.getresponse()
+    if response.status < 300:
+        return response.read()
+    else:
+        logger.warn(response.status)
+        logger.warn(response.reason)
+        logger.warn(response.read())
+    return []
+
+
+def _get_manifest(workspace_path):
+    manifest_path = workspace_path + "pinned-manifest.xml"
+    if os.path.exists(manifest_path):
+        with open(manifest_path, "r") as manifest_file:
+            manifest = manifest_file.read()
+
+    return manifest
+
+
+def _get_test_jobs(workspace_path):
+    test_jobs = ""
+    for root, dirs, files in os.walk(workspace_path):
+        for f in files:
+            if f.startswith("lava-job-info-"):
+                print "Opening %s/%s" % (root, f)
+                with open("%s/%s" % (root, f), 'r') as info_file:
+                    lava_info = json.load(info_file)
+                    test_job_ids = ",".join(lava_info['job_id'])
+                    print "LAVA job IDs to add: %s" % test_job_ids
+                    if len(test_jobs) == 0:
+                        test_jobs = test_job_ids
+                    else:
+                        test_jobs = test_jobs + "," + test_job_ids
+
+    return test_jobs
 
 
 if __name__ == '__main__':
-    main()
+    jenkins_project_name = os.environ.get("JOB_NAME")
 
+    jenkins_build_number = os.environ.get("BUILD_NUMBER")
+    jenkins_build_id = os.environ.get("BUILD_ID")
+    jenkins_build_url = os.environ.get("BUILD_URL")
+
+    art_url = os.environ.get("ART_URL", "http://localhost:8000/")
+    art_token = os.environ.get("ART_TOKEN")
+
+    if jenkins_build_number is None:
+        print "Build number not set. Exiting!"
+        sys.exit(1)
+    if jenkins_project_name is None:
+        print "Project name not set. Exiting!"
+        sys.exit(1)
+    if jenkins_build_url is None:
+        print "Build URL not set. Exiting!"
+        sys.exit(1)
+    if art_token is None:
+        print "ART token not set. Exiting!"
+        sys.exit(1)
+
+    workspace_path = "/home/buildslave/srv/%s/android/out/" % jenkins_project_name
+
+    manifest = _get_manifest(workspace_path)
+    test_jobs = _get_test_jobs(workspace_path)
+
+    print "Registered test jobs: %s" % test_jobs
+
+    params = {
+        'name': jenkins_project_name,
+
+        'build_id': jenkins_build_id,
+        'build_url': jenkins_build_url,
+        'build_number': jenkins_build_number,
+
+        'test_jobs': test_jobs,
+        'manifest': manifest,
+
+        "gerrit_change_number": os.environ.get("GERRIT_CHANGE_NUMBER"),
+        "gerrit_patchset_number":os.environ.get("GERRIT_PATCHSET_NUMBER"),
+        "gerrit_change_url": os.environ.get("GERRIT_CHANGE_URL"),
+        "gerrit_change_id": os.environ.get("GERRIT_CHANGE_ID", "")
+    }
+
+    print params
+
+    _push_object(art_token, art_url, RESULT_ENDPOINT, params)
