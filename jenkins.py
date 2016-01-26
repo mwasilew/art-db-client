@@ -87,10 +87,8 @@ if __name__ == '__main__':
     art_url = os.environ.get("ART_URL", "http://localhost:8000/")
     art_token = os.environ.get("ART_TOKEN")
 
-    workspace_path = "/home/buildslave/srv/%s/android/out/" % jenkins_project_name
-
-    manifest = _get_manifest(workspace_path)
-    test_jobs = _get_test_jobs(workspace_path)
+    manifest = _get_manifest(os.environ.get("WORKSPACE"))
+    test_jobs = _get_test_jobs("/home/buildslave/srv/%s/android/out/" % jenkins_project_name)
 
     if jenkins_build_number is None:
         print "Build number not set. Exiting!"
