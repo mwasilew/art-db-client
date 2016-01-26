@@ -87,6 +87,11 @@ if __name__ == '__main__':
     art_url = os.environ.get("ART_URL", "http://localhost:8000/")
     art_token = os.environ.get("ART_TOKEN")
 
+    workspace_path = "/home/buildslave/srv/%s/android/out/" % jenkins_project_name
+
+    manifest = _get_manifest(workspace_path)
+    test_jobs = _get_test_jobs(workspace_path)
+
     if jenkins_build_number is None:
         print "Build number not set. Exiting!"
         sys.exit(1)
@@ -99,11 +104,9 @@ if __name__ == '__main__':
     if art_token is None:
         print "ART token not set. Exiting!"
         sys.exit(1)
-
-    workspace_path = "/home/buildslave/srv/%s/android/out/" % jenkins_project_name
-
-    manifest = _get_manifest(workspace_path)
-    test_jobs = _get_test_jobs(workspace_path)
+    if not manifest:
+        print "Manifest missing. Exiting!"
+        sys.exit(1)
 
     print "Registered test jobs: %s" % test_jobs
 
