@@ -54,9 +54,9 @@ def _get_manifest(workspace_path):
     manifest_path = workspace_path + "pinned-manifest.xml"
     if os.path.exists(manifest_path):
         with open(manifest_path, "r") as manifest_file:
-            manifest = manifest_file.read()
+            return manifest_file.read()
 
-    return manifest
+    return None
 
 
 def _get_test_jobs(workspace_path):
