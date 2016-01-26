@@ -18,7 +18,7 @@ class LavaServer(object):
         self.url = base_url
         self.username = username # API username
         self.password = password # API token
-        self.xmlrpc_url = base_url + LavaTestSystem.XMLRPC
+        self.xmlrpc_url = base_url + LavaServer.XMLRPC
 
 
     def call_xmlrpc(self, method_name, *method_params):
