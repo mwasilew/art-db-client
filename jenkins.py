@@ -41,12 +41,13 @@ def _push_object(auth_pw, backend_url, endpoint, params):
     conn.request("POST", endpoint, json.dumps(params), headers)
 
     response = conn.getresponse()
+
     if response.status < 300:
         return response.read()
     else:
-        logger.warn(response.status)
-        logger.warn(response.reason)
-        logger.warn(response.read())
+        print response.status
+        print response.reason
+        print response.read()
     return []
 
 
