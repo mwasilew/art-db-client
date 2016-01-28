@@ -60,11 +60,12 @@ def _push_object(auth_pw, backend_url, endpoint, params):
 
 
 def _get_manifest(workspace_path):
-    manifest_path = workspace_path + "pinned-manifest.xml"
+    manifest_path = os.path.join(workspace_path, "pinned-manifest.xml")
+    print "Searching for: %s" % manifest_path
     if os.path.exists(manifest_path):
         with open(manifest_path, "r") as manifest_file:
             return manifest_file.read()
-
+    print "Manifest not found"
     return None
 
 
