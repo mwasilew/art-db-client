@@ -38,14 +38,6 @@ def _push_object(auth_pw, backend_url, endpoint, params):
         print "Unknown scheme: %s" % usplit.scheme
         sys.exit(1)
 
-    # debug
-    debug = httplib.HTTPConnection("requestb.in")
-    debug.request("POST", "/1k52sol1", json.dumps(params), headers)
-    debug_response = debug.getresponse()
-
-    print debug_response.status, debug_response.reason, debug_response.read()
-    # debug
-
     conn.request("POST", endpoint, json.dumps(params), headers)
 
     response = conn.getresponse()
