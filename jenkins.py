@@ -79,7 +79,55 @@ def _get_test_jobs(workspace_path):
     return test_jobs
 
 
+def _results(workspace_path):
+
+    benchmarks = {
+        "Boot.oat size": ['boot_oat_size_ARM_32_Quick.txt',
+                          'boot_oat_size_ARM_64_Quick.txt',
+                          'boot_oat_size_x86_32_Quick.txt',
+                          'boot_oat_size_x86_64_Quick.txt',
+                          'boot_oat_size_x86_64_Optimizing.txt',
+                          'boot_oat_size_x86_32_Optimizing.txt',
+                          'boot_oat_size_ARM_64_Optimizing.txt',
+                          'boot_oat_size_ARM_32_Optimizing.txt',
+                          'boot_oat_size_mips_64_Optimizing.txt',
+                          'boot_oat_size_mips_32_Quick.txt'],
+
+        "Oat Execution Time": ['avg_oat_time_ARM_32_Quick.txt',
+                               'avg_oat_time_ARM_64_Quick.txt',
+                               'avg_oat_time_x86_64_Quick.txt',
+                               'avg_oat_time_x86_32_Quick.txt',
+                               'avg_oat_time_x86_64_Optimizing.txt',
+                               'avg_oat_time_x86_32_Optimizing.txt',
+                               'avg_oat_time_ARM_32_Optimizing.txt',
+                               'avg_oat_time_ARM_64_Optimizing.txt',
+                               'avg_oat_time_mips_64_Optimizing.txt',
+                               'avg_oat_time_mips_32_Quick.txt']
+        }
+
+    val = []
+
+    for benchmark, subscores in benchmarks.items():
+        for subscore in subscores:
+            raw = open(os.path.join(workspace_path, subscore), 'r').read().strip()
+            measurement = float(raw.replace("YVALUE=", ""))
+
+            name = (subscore
+                    .replace("avg_oat_time_", "")
+                    .replace("boot_oat_size_", "")
+                    .replace(".txt", "")
+                    .replace("_", " "))
+
+            val.append({
+                "benchmark": benchmark,
+                "name": name,
+                "measurement": measurement
+            })
+
+    print val
+
 if __name__ == '__main__':
+
     jenkins_project_name = os.environ.get("JOB_NAME")
 
     jenkins_build_number = os.environ.get("BUILD_NUMBER")
@@ -93,6 +141,7 @@ if __name__ == '__main__':
 
     manifest = _get_manifest(os.environ.get("WORKSPACE"))
     test_jobs = _get_test_jobs("/home/buildslave/srv/%s/android/out/" % jenkins_project_name)
+    results = _results(os.environ.get("WORKSPACE"))
 
     if jenkins_build_number is None:
         print "Build number not set. Exiting!"
@@ -124,9 +173,10 @@ if __name__ == '__main__':
         'branch_name': branch_name,
 
         "gerrit_change_number": os.environ.get("GERRIT_CHANGE_NUMBER"),
-        "gerrit_patchset_number":os.environ.get("GERRIT_PATCHSET_NUMBER"),
+        "gerrit_patchset_number": os.environ.get("GERRIT_PATCHSET_NUMBER"),
         "gerrit_change_url": os.environ.get("GERRIT_CHANGE_URL"),
-        "gerrit_change_id": os.environ.get("GERRIT_CHANGE_ID", "")
+        "gerrit_change_id": os.environ.get("GERRIT_CHANGE_ID", ""),
+        "results": results
     }
 
     print params
