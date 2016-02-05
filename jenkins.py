@@ -124,7 +124,7 @@ def _results(workspace_path):
                 "measurement": measurement
             })
 
-    print val
+    return val
 
 if __name__ == '__main__':
 
