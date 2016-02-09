@@ -110,6 +110,7 @@ def _results(workspace_path):
     for benchmark, subscores in benchmarks.items():
         for subscore in subscores:
             path = os.path.join(workspace_path, subscore)
+            print path, os.path.exists(path)
             if os.path.exists(path):
                 raw = open(path, 'r').read().strip()
                 measurement = float(raw.replace("YVALUE=", ""))
