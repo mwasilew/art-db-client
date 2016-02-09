@@ -109,20 +109,22 @@ def _results(workspace_path):
 
     for benchmark, subscores in benchmarks.items():
         for subscore in subscores:
-            raw = open(os.path.join(workspace_path, subscore), 'r').read().strip()
-            measurement = float(raw.replace("YVALUE=", ""))
+            path = os.path.join(workspace_path, subscore)
+            if os.path.exists(path):
+                raw = open(path, 'r').read().strip()
+                measurement = float(raw.replace("YVALUE=", ""))
 
-            name = (subscore
-                    .replace("avg_oat_time_", "")
-                    .replace("boot_oat_size_", "")
-                    .replace(".txt", "")
-                    .replace("_", " "))
+                name = (subscore
+                        .replace("avg_oat_time_", "")
+                        .replace("boot_oat_size_", "")
+                        .replace(".txt", "")
+                        .replace("_", " "))
 
-            val.append({
-                "benchmark": benchmark,
-                "name": name,
-                "measurement": measurement
-            })
+                val.append({
+                    "benchmark": benchmark,
+                    "name": name,
+                    "measurement": measurement
+                })
 
     return val
 
